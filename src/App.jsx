@@ -15,6 +15,19 @@ const ROOMS = ['미래창작공방', '에듀테크 교육실']
 const HOURS = Array.from({ length: 10 }, (_, i) => String(i + 8).padStart(2, '0'))
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
 
+const ROOM_ACCENTS = {
+  '미래창작공방':
+    'bg-blue-500/90 hover:bg-blue-500 text-white border border-blue-300/50 shadow-lg shadow-blue-500/20',
+  '에듀테크 교육실':
+    'bg-emerald-500/90 hover:bg-emerald-500 text-white border border-emerald-300/50 shadow-lg shadow-emerald-500/20',
+}
+
+const INPUT_CLASS =
+  'w-full rounded-xl border border-white/60 bg-white/50 backdrop-blur-sm px-3 py-2 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60 hover:bg-white/70 transition-colors duration-200'
+
+const GLASS_BUTTON_CLASS =
+  'w-full rounded-2xl bg-white/50 hover:bg-white/70 backdrop-blur-sm border border-white/60 px-4 py-3 text-gray-800 font-medium shadow-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+
 function App() {
   const [view, setView] = useState('home')
   const [selectedRoom, setSelectedRoom] = useState(null)
@@ -27,6 +40,11 @@ function App() {
   const [endMinute, setEndMinute] = useState(MINUTES[0])
   const [loading, setLoading] = useState(false)
 
+  const [searchName, setSearchName] = useState('')
+  const [reservations, setReservations] = useState(null)
+  const [searching, setSearching] = useState(false)
+  const [cancelingId, setCancelingId] = useState(null)
+
   const goHome = () => {
     setSelectedRoom(null)
     setView('home')
@@ -36,11 +54,6 @@ function App() {
     setSelectedRoom(room)
     setView('booking')
   }
-
-  const [searchName, setSearchName] = useState('')
-  const [reservations, setReservations] = useState(null)
-  const [searching, setSearching] = useState(false)
-  const [cancelingId, setCancelingId] = useState(null)
 
   const handleSearch = async (e) => {
     e?.preventDefault()
@@ -132,205 +145,201 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      {view === 'home' && (
-        <div className="flex flex-col gap-4 w-full max-w-xs">
-          <h1 className="text-2xl font-semibold text-center text-gray-900 mb-2">
-            특별실 예약 시스템
-          </h1>
-          {ROOMS.map((room) => (
+    <div className="aurora-bg min-h-screen w-full flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md rounded-3xl border border-white/40 bg-white/30 p-8 shadow-2xl shadow-indigo-900/10 backdrop-blur-xl">
+        {view === 'home' && (
+          <div className="flex flex-col gap-4">
+            <h1 className="mb-2 text-center text-2xl font-semibold text-gray-900">
+              특별실 예약 시스템
+            </h1>
+            {ROOMS.map((room) => (
+              <button
+                key={room}
+                type="button"
+                onClick={() => openBooking(room)}
+                className={`w-full rounded-2xl px-4 py-3 font-medium transition-colors duration-200 ${ROOM_ACCENTS[room]}`}
+              >
+                {room}
+              </button>
+            ))}
             <button
-              key={room}
               type="button"
-              onClick={() => openBooking(room)}
-              className="w-full rounded-lg bg-purple-600 px-4 py-3 text-white font-medium hover:bg-purple-700 transition-colors"
+              onClick={() => setView('myReservations')}
+              className={GLASS_BUTTON_CLASS}
             >
-              {room}
+              내 예약 조회 및 취소
             </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setView('myReservations')}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700 font-medium hover:bg-gray-100 transition-colors"
-          >
-            내 예약 조회 및 취소
-          </button>
-        </div>
-      )}
+          </div>
+        )}
 
-      {view === 'booking' && (
-        <div className="w-full max-w-sm">
-          <button
-            type="button"
-            onClick={goHome}
-            className="mb-6 text-sm text-gray-500 hover:text-gray-700"
-          >
-            ← 홈으로
-          </button>
-          <h1 className="text-2xl font-semibold text-gray-900 text-center mb-6">
-            예약 신청 {selectedRoom ? `- ${selectedRoom}` : ''}
-          </h1>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                신청 교사명
-              </label>
+        {view === 'booking' && (
+          <div>
+            <button
+              type="button"
+              onClick={goHome}
+              className="mb-6 text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
+            >
+              ← 홈으로
+            </button>
+            <h1 className="mb-6 text-center text-2xl font-semibold text-gray-900">
+              예약 신청 {selectedRoom ? `- ${selectedRoom}` : ''}
+            </h1>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  신청 교사명
+                </label>
+                <input
+                  type="text"
+                  value={teacherName}
+                  onChange={(e) => setTeacherName(e.target.value)}
+                  required
+                  className={INPUT_CLASS}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  사용 날짜
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                  className={INPUT_CLASS}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    시작 시간
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      value={startHour}
+                      onChange={(e) => setStartHour(e.target.value)}
+                      className={INPUT_CLASS}
+                    >
+                      {HOURS.map((h) => (
+                        <option key={h} value={h}>
+                          {h}시
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={startMinute}
+                      onChange={(e) => setStartMinute(e.target.value)}
+                      className={INPUT_CLASS}
+                    >
+                      {MINUTES.map((m) => (
+                        <option key={m} value={m}>
+                          {m}분
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    종료 시간
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      value={endHour}
+                      onChange={(e) => setEndHour(e.target.value)}
+                      className={INPUT_CLASS}
+                    >
+                      {HOURS.map((h) => (
+                        <option key={h} value={h}>
+                          {h}시
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={endMinute}
+                      onChange={(e) => setEndMinute(e.target.value)}
+                      className={INPUT_CLASS}
+                    >
+                      {MINUTES.map((m) => (
+                        <option key={m} value={m}>
+                          {m}분
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading} className={GLASS_BUTTON_CLASS}>
+                {loading ? '처리 중...' : '예약 신청하기'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {view === 'myReservations' && (
+          <div>
+            <button
+              type="button"
+              onClick={goHome}
+              className="mb-6 text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
+            >
+              ← 홈으로
+            </button>
+            <h1 className="mb-6 text-center text-2xl font-semibold text-gray-900">
+              내 예약 조회 및 취소
+            </h1>
+
+            <form onSubmit={handleSearch} className="mb-6 flex gap-2">
               <input
                 type="text"
-                value={teacherName}
-                onChange={(e) => setTeacherName(e.target.value)}
-                required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                placeholder="교사 이름"
+                className={INPUT_CLASS}
               />
-            </div>
+              <button
+                type="submit"
+                disabled={searching}
+                className="shrink-0 rounded-xl border border-white/60 bg-white/50 px-4 py-2 font-medium text-gray-800 shadow-sm backdrop-blur-sm transition-colors duration-200 hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {searching ? '조회 중...' : '조회'}
+              </button>
+            </form>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                사용 날짜
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
+            {reservations !== null && reservations.length === 0 && (
+              <p className="text-center text-sm text-gray-600">예약된 내역이 없습니다.</p>
+            )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  시작 시간
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    value={startHour}
-                    onChange={(e) => setStartHour(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-2 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            {reservations !== null && reservations.length > 0 && (
+              <ul className="flex flex-col gap-3">
+                {reservations.map((item) => (
+                  <li
+                    key={item.id}
+                    className="flex flex-col gap-1 rounded-2xl border border-white/50 bg-white/40 p-4 text-left shadow-sm backdrop-blur-sm"
                   >
-                    {HOURS.map((h) => (
-                      <option key={h} value={h}>
-                        {h}시
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={startMinute}
-                    onChange={(e) => setStartMinute(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-2 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    {MINUTES.map((m) => (
-                      <option key={m} value={m}>
-                        {m}분
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  종료 시간
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    value={endHour}
-                    onChange={(e) => setEndHour(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-2 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    {HOURS.map((h) => (
-                      <option key={h} value={h}>
-                        {h}시
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={endMinute}
-                    onChange={(e) => setEndMinute(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-2 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    {MINUTES.map((m) => (
-                      <option key={m} value={m}>
-                        {m}분
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-purple-600 px-4 py-3 text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? '처리 중...' : '예약 신청하기'}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {view === 'myReservations' && (
-        <div className="w-full max-w-sm">
-          <button
-            type="button"
-            onClick={goHome}
-            className="mb-6 text-sm text-gray-500 hover:text-gray-700"
-          >
-            ← 홈으로
-          </button>
-          <h1 className="text-2xl font-semibold text-gray-900 text-center mb-6">
-            내 예약 조회 및 취소
-          </h1>
-
-          <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-            <input
-              type="text"
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              placeholder="교사 이름"
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <button
-              type="submit"
-              disabled={searching}
-              className="rounded-lg bg-purple-600 px-4 py-2 text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {searching ? '조회 중...' : '조회'}
-            </button>
-          </form>
-
-          {reservations !== null && reservations.length === 0 && (
-            <p className="text-sm text-gray-500 text-center">
-              예약된 내역이 없습니다.
-            </p>
-          )}
-
-          {reservations !== null && reservations.length > 0 && (
-            <ul className="flex flex-col gap-3">
-              {reservations.map((item) => (
-                <li
-                  key={item.id}
-                  className="rounded-lg border border-gray-300 p-4 text-left flex flex-col gap-1"
-                >
-                  <p className="font-medium text-gray-900">{item.room}</p>
-                  <p className="text-sm text-gray-600">
-                    {item.date} {item.startTime}~{item.endTime}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleCancel(item.id)}
-                    disabled={cancelingId === item.id}
-                    className="self-start mt-2 rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {cancelingId === item.id ? '취소 중...' : '예약 취소'}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+                    <p className="font-medium text-gray-900">{item.room}</p>
+                    <p className="text-sm text-gray-600">
+                      {item.date} {item.startTime}~{item.endTime}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleCancel(item.id)}
+                      disabled={cancelingId === item.id}
+                      className="mt-2 self-start rounded-xl border border-white/60 bg-white/50 px-3 py-1.5 text-sm font-medium text-red-600 backdrop-blur-sm transition-colors duration-200 hover:bg-red-50/70 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {cancelingId === item.id ? '취소 중...' : '예약 취소'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
