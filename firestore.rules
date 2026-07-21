@@ -5,7 +5,8 @@ service cloud.firestore {
 
     function isValidNewReservation() {
       let data = request.resource.data;
-      return data.ownerId == 'test-user'
+      return request.auth != null
+        && data.ownerId == request.auth.uid
         && data.teacherName is string
         && data.room is string
         && data.date is string
@@ -27,7 +28,6 @@ service cloud.firestore {
         && after.diff(before).affectedKeys().hasOnly(['status']);
     }
 
-    // TODO: 로그인 기능 구현 후 request.auth.uid 기반으로 ownerId 검증 로직으로 교체할 것
     match /reservations/{reservationId} {
       allow read: if true;
 

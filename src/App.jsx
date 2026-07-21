@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
 import {
   collection,
   deleteDoc,
@@ -9,7 +10,7 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore'
-import { db } from './firebase'
+import { auth, db, googleProvider } from './firebase'
 
 const ROOMS = ['미래창작공방', '에듀테크 교육실']
 const HOURS = Array.from({ length: 10 }, (_, i) => String(i + 8).padStart(2, '0'))
@@ -34,6 +35,9 @@ const GLASS_BUTTON_CLASS =
   'w-full rounded-2xl bg-white/50 hover:bg-white/70 backdrop-blur-sm border border-white/60 px-4 py-3 text-gray-800 font-medium shadow-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
 
 function App() {
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+
   const [view, setView] = useState('home')
   const [selectedRoom, setSelectedRoom] = useState(null)
 
@@ -45,14 +49,37 @@ function App() {
   const [endMinute, setEndMinute] = useState(MINUTES[0])
   const [loading, setLoading] = useState(false)
 
-  const [searchName, setSearchName] = useState('')
   const [reservations, setReservations] = useState(null)
-  const [searching, setSearching] = useState(false)
+  const [myLoading, setMyLoading] = useState(false)
   const [cancelingId, setCancelingId] = useState(null)
 
   const [allReservations, setAllReservations] = useState([])
   const [allLoading, setAllLoading] = useState(false)
   const [filterDate, setFilterDate] = useState('')
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+      setAuthLoading(false)
+    })
+    return unsubscribe
+  }, [])
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider)
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth)
+    } catch (err) {
+      alert(err.message)
+    }
+  }
 
   const goHome = () => {
     setSelectedRoom(null)
@@ -61,7 +88,13 @@ function App() {
 
   const openBooking = (room) => {
     setSelectedRoom(room)
+    setTeacherName(user.displayName || '')
     setView('booking')
+  }
+
+  const openMyReservations = () => {
+    setView('myReservations')
+    fetchMyReservations()
   }
 
   const openAllReservations = () => {
@@ -73,11 +106,7 @@ function App() {
   const fetchAllReservations = async () => {
     setAllLoading(true)
     try {
-      const q = query(
-        collection(db, 'reservations'),
-        where('ownerId', '==', 'test-user'),
-        where('status', '==', 'active'),
-      )
+      const q = query(collection(db, 'reservations'), where('status', '==', 'active'))
       const snapshot = await getDocs(q)
       const list = snapshot.docs
         .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
@@ -90,26 +119,23 @@ function App() {
     }
   }
 
-  const handleSearch = async (e) => {
-    e?.preventDefault()
-    setSearching(true)
+  const fetchMyReservations = async () => {
+    setMyLoading(true)
     try {
       const q = query(
         collection(db, 'reservations'),
-        where('ownerId', '==', 'test-user'),
+        where('ownerId', '==', user.uid),
         where('status', '==', 'active'),
       )
       const snapshot = await getDocs(q)
-      const keyword = searchName.replace(/\s/g, '')
-      const filtered = snapshot.docs
+      const list = snapshot.docs
         .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
-        .filter((item) => item.teacherName?.replace(/\s/g, '').includes(keyword))
         .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
-      setReservations(filtered)
+      setReservations(list)
     } catch (err) {
       alert(err.message)
     } finally {
-      setSearching(false)
+      setMyLoading(false)
     }
   }
 
@@ -118,7 +144,7 @@ function App() {
     setCancelingId(id)
     try {
       await deleteDoc(doc(db, 'reservations', id))
-      await handleSearch()
+      await fetchMyReservations()
     } catch (err) {
       alert(err.message)
     } finally {
@@ -159,7 +185,7 @@ function App() {
       await runTransaction(db, async (transaction) => {
         const newDocRef = doc(collection(db, 'reservations'))
         transaction.set(newDocRef, {
-          ownerId: 'test-user',
+          ownerId: user.uid,
           teacherName,
           room: selectedRoom,
           date,
@@ -183,11 +209,52 @@ function App() {
     ? allReservations.filter((item) => item.date === filterDate)
     : allReservations
 
+  if (authLoading) {
+    return (
+      <div className="aurora-bg min-h-screen w-full flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md rounded-3xl border border-white/40 bg-white/30 p-8 text-center shadow-2xl shadow-indigo-900/10 backdrop-blur-xl">
+          <p className="text-sm font-medium text-gray-700">로딩 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="aurora-bg min-h-screen w-full flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md rounded-3xl border border-white/40 bg-white/30 p-8 text-center shadow-2xl shadow-indigo-900/10 backdrop-blur-xl">
+          <h1 className="mb-6 text-2xl font-semibold text-gray-900">특별실 예약 시스템</h1>
+          <button type="button" onClick={handleGoogleSignIn} className={GLASS_BUTTON_CLASS}>
+            Google로 로그인
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="aurora-bg min-h-screen w-full flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md rounded-3xl border border-white/40 bg-white/30 p-8 shadow-2xl shadow-indigo-900/10 backdrop-blur-xl">
         {view === 'home' && (
           <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-end gap-2">
+              {user.photoURL && (
+                <img
+                  src={user.photoURL}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="h-7 w-7 rounded-full border border-white/60"
+                />
+              )}
+              <span className="text-sm font-medium text-gray-700">{user.displayName}</span>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-lg border border-white/60 bg-white/50 px-2.5 py-1 text-xs font-medium text-gray-700 backdrop-blur-sm transition-colors duration-200 hover:bg-white/70"
+              >
+                로그아웃
+              </button>
+            </div>
             <h1 className="mb-2 text-center text-2xl font-semibold text-gray-900">
               특별실 예약 시스템
             </h1>
@@ -204,11 +271,7 @@ function App() {
             <button type="button" onClick={openAllReservations} className={GLASS_BUTTON_CLASS}>
               전체 예약 현황 보기
             </button>
-            <button
-              type="button"
-              onClick={() => setView('myReservations')}
-              className={GLASS_BUTTON_CLASS}
-            >
+            <button type="button" onClick={openMyReservations} className={GLASS_BUTTON_CLASS}>
               내 예약 조회 및 취소
             </button>
           </div>
@@ -335,28 +398,13 @@ function App() {
               내 예약 조회 및 취소
             </h1>
 
-            <form onSubmit={handleSearch} className="mb-6 flex gap-2">
-              <input
-                type="text"
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                placeholder="교사 이름"
-                className={INPUT_CLASS}
-              />
-              <button
-                type="submit"
-                disabled={searching}
-                className="shrink-0 rounded-xl border border-white/60 bg-white/50 px-4 py-2 font-medium text-gray-800 shadow-sm backdrop-blur-sm transition-colors duration-200 hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {searching ? '조회 중...' : '조회'}
-              </button>
-            </form>
+            {myLoading && <p className="text-center text-sm text-gray-600">불러오는 중...</p>}
 
-            {reservations !== null && reservations.length === 0 && (
+            {!myLoading && reservations !== null && reservations.length === 0 && (
               <p className="text-center text-sm text-gray-600">예약된 내역이 없습니다.</p>
             )}
 
-            {reservations !== null && reservations.length > 0 && (
+            {!myLoading && reservations !== null && reservations.length > 0 && (
               <ul className="flex flex-col gap-3">
                 {reservations.map((item) => (
                   <li
