@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react'
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+} from 'firebase/auth'
 import {
   collection,
   deleteDoc,
@@ -34,6 +42,35 @@ const INPUT_CLASS =
 const GLASS_BUTTON_CLASS =
   'w-full rounded-2xl bg-white/50 hover:bg-white/70 backdrop-blur-sm border border-white/60 px-4 py-3 text-gray-800 font-medium shadow-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
 
+const TAB_ACTIVE_CLASS =
+  'flex-1 rounded-xl bg-white/70 px-3 py-2 text-sm font-medium text-gray-900 shadow-sm transition-colors duration-200'
+const TAB_INACTIVE_CLASS =
+  'flex-1 rounded-xl bg-white/20 px-3 py-2 text-sm font-medium text-gray-600 transition-colors duration-200 hover:bg-white/40'
+
+const AUTH_ERROR_MESSAGES = {
+  'auth/invalid-email': '올바른 이메일 형식이 아닙니다.',
+  'auth/user-not-found': '가입되지 않은 이메일입니다.',
+  'auth/wrong-password': '비밀번호가 올바르지 않습니다.',
+  'auth/invalid-credential': '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'auth/email-already-in-use': '이미 가입된 이메일입니다.',
+  'auth/weak-password': '비밀번호는 6자 이상이어야 합니다.',
+  'auth/missing-password': '비밀번호를 입력해주세요.',
+  'auth/too-many-requests': '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.',
+}
+
+const getAuthErrorMessage = (err) =>
+  AUTH_ERROR_MESSAGES[err.code] || '오류가 발생했습니다. 다시 시도해주세요.'
+
+const RESET_ERROR_MESSAGES = {
+  'auth/invalid-email': '입력하신 이메일 형식을 확인해주세요.',
+  'auth/user-not-found': '입력하신 이메일 형식을 확인해주세요.',
+  'auth/missing-email': '이메일을 입력해주세요.',
+  'auth/too-many-requests': '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.',
+}
+
+const getResetErrorMessage = (err) =>
+  RESET_ERROR_MESSAGES[err.code] || '오류가 발생했습니다. 다시 시도해주세요.'
+
 function App() {
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
@@ -57,6 +94,17 @@ function App() {
   const [allLoading, setAllLoading] = useState(false)
   const [filterDate, setFilterDate] = useState('')
 
+  const [authMode, setAuthMode] = useState('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [signupName, setSignupName] = useState('')
+  const [authSubmitting, setAuthSubmitting] = useState(false)
+
+  const [showResetPassword, setShowResetPassword] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetSubmitting, setResetSubmitting] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
@@ -78,6 +126,45 @@ function App() {
       await signOut(auth)
     } catch (err) {
       alert(err.message)
+    }
+  }
+
+  const handleEmailAuth = async (e) => {
+    e.preventDefault()
+    setAuthSubmitting(true)
+    try {
+      if (authMode === 'login') {
+        await signInWithEmailAndPassword(auth, email, password)
+      } else {
+        const credential = await createUserWithEmailAndPassword(auth, email, password)
+        if (signupName.trim()) {
+          await updateProfile(credential.user, { displayName: signupName.trim() })
+          setUser({ ...auth.currentUser })
+        }
+      }
+    } catch (err) {
+      alert(getAuthErrorMessage(err))
+    } finally {
+      setAuthSubmitting(false)
+    }
+  }
+
+  const openResetPassword = () => {
+    setResetEmail(email)
+    setResetSent(false)
+    setShowResetPassword(true)
+  }
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault()
+    setResetSubmitting(true)
+    try {
+      await sendPasswordResetEmail(auth, resetEmail)
+      setResetSent(true)
+    } catch (err) {
+      alert(getResetErrorMessage(err))
+    } finally {
+      setResetSubmitting(false)
     }
   }
 
@@ -219,14 +306,140 @@ function App() {
     )
   }
 
+  if (!user && showResetPassword) {
+    return (
+      <div className="aurora-bg min-h-screen w-full flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md rounded-3xl border border-white/40 bg-white/30 p-8 shadow-2xl shadow-indigo-900/10 backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={() => setShowResetPassword(false)}
+            className="mb-6 text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
+          >
+            ← 로그인으로
+          </button>
+          <h1 className="mb-6 text-center text-2xl font-semibold text-gray-900">
+            비밀번호 재설정
+          </h1>
+
+          {!resetSent && (
+            <form onSubmit={handlePasswordReset} className="flex flex-col gap-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">이메일</label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  className={INPUT_CLASS}
+                />
+              </div>
+              <button type="submit" disabled={resetSubmitting} className={GLASS_BUTTON_CLASS}>
+                {resetSubmitting ? '처리 중...' : '재설정 이메일 보내기'}
+              </button>
+            </form>
+          )}
+
+          {resetSent && (
+            <div className="flex flex-col gap-4 text-center">
+              <p className="text-sm text-gray-700">
+                비밀번호 재설정 이메일을 보냈습니다. 받은편지함을 확인해주세요.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowResetPassword(false)}
+                className={GLASS_BUTTON_CLASS}
+              >
+                로그인 화면으로 돌아가기
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   if (!user) {
     return (
       <div className="aurora-bg min-h-screen w-full flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md rounded-3xl border border-white/40 bg-white/30 p-8 text-center shadow-2xl shadow-indigo-900/10 backdrop-blur-xl">
-          <h1 className="mb-6 text-2xl font-semibold text-gray-900">특별실 예약 시스템</h1>
+        <div className="w-full max-w-md rounded-3xl border border-white/40 bg-white/30 p-8 shadow-2xl shadow-indigo-900/10 backdrop-blur-xl">
+          <h1 className="mb-6 text-center text-2xl font-semibold text-gray-900">
+            특별실 예약 시스템
+          </h1>
+
           <button type="button" onClick={handleGoogleSignIn} className={GLASS_BUTTON_CLASS}>
             Google로 로그인
           </button>
+
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/50" />
+            <span className="text-xs font-medium text-gray-500">또는</span>
+            <div className="h-px flex-1 bg-white/50" />
+          </div>
+
+          <div className="mb-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setAuthMode('login')}
+              className={authMode === 'login' ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}
+            >
+              로그인
+            </button>
+            <button
+              type="button"
+              onClick={() => setAuthMode('signup')}
+              className={authMode === 'signup' ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}
+            >
+              회원가입
+            </button>
+          </div>
+
+          <form onSubmit={handleEmailAuth} className="flex flex-col gap-3">
+            {authMode === 'signup' && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">이름</label>
+                <input
+                  type="text"
+                  value={signupName}
+                  onChange={(e) => setSignupName(e.target.value)}
+                  className={INPUT_CLASS}
+                />
+              </div>
+            )}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">이메일</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className={INPUT_CLASS}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">비밀번호</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className={INPUT_CLASS}
+              />
+            </div>
+            {authMode === 'login' && (
+              <div className="-mt-1 text-right">
+                <button
+                  type="button"
+                  onClick={openResetPassword}
+                  className="text-xs font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900"
+                >
+                  비밀번호를 잊으셨나요?
+                </button>
+              </div>
+            )}
+            <button type="submit" disabled={authSubmitting} className={GLASS_BUTTON_CLASS}>
+              {authSubmitting ? '처리 중...' : authMode === 'login' ? '로그인' : '회원가입'}
+            </button>
+          </form>
         </div>
       </div>
     )
