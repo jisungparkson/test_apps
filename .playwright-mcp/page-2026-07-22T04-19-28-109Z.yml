@@ -1,0 +1,16 @@
+- generic [ref=f3e4]:
+  - heading "특별실 예약 시스템" [level=1] [ref=f3e14]
+  - button "Google로 로그인" [ref=f3e15]
+  - generic [ref=f3e16]: 또는
+  - generic [ref=f3e20]:
+    - button "로그인" [ref=f3e21]
+    - button "회원가입" [ref=f3e22]
+  - generic [ref=f3e23]:
+    - generic [ref=f3e24]:
+      - generic [ref=f3e25]: 이메일
+      - textbox [ref=f3e26]: playwright-booking-test@example.com
+    - generic [ref=f3e27]:
+      - generic [ref=f3e28]: 비밀번호
+      - textbox [ref=f3e29]: test1234!
+    - button "비밀번호를 잊으셨나요?" [ref=f3e31]
+    - button "로그인" [ref=f3e32]

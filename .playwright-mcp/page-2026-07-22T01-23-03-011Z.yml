@@ -1,0 +1,66 @@
+- generic [ref=f2e39]:
+  - button "← 홈으로" [ref=f2e40]
+  - heading "예약 신청 - 미래창작공방" [level=1] [ref=f2e41]
+  - generic [ref=f2e42]:
+    - generic [ref=f2e43]:
+      - generic [ref=f2e44]: 신청 교사명
+      - textbox [ref=f2e45]: 테스트
+    - generic [ref=f2e46]:
+      - generic [ref=f2e47]: 사용 날짜
+      - textbox [ref=f2e48]
+    - generic [ref=f2e49]:
+      - generic [ref=f2e50]:
+        - generic [ref=f2e51]: 시작 시간
+        - generic [ref=f2e52]:
+          - combobox [ref=f2e53]:
+            - option "08시" [selected]
+            - option "09시"
+            - option "10시"
+            - option "11시"
+            - option "12시"
+            - option "13시"
+            - option "14시"
+            - option "15시"
+            - option "16시"
+            - option "17시"
+          - combobox [ref=f2e54]:
+            - option "00분" [selected]
+            - option "05분"
+            - option "10분"
+            - option "15분"
+            - option "20분"
+            - option "25분"
+            - option "30분"
+            - option "35분"
+            - option "40분"
+            - option "45분"
+            - option "50분"
+            - option "55분"
+      - generic [ref=f2e55]:
+        - generic [ref=f2e56]: 종료 시간
+        - generic [ref=f2e57]:
+          - combobox [ref=f2e58]:
+            - option "08시" [selected]
+            - option "09시"
+            - option "10시"
+            - option "11시"
+            - option "12시"
+            - option "13시"
+            - option "14시"
+            - option "15시"
+            - option "16시"
+            - option "17시"
+          - combobox [ref=f2e59]:
+            - option "00분" [selected]
+            - option "05분"
+            - option "10분"
+            - option "15분"
+            - option "20분"
+            - option "25분"
+            - option "30분"
+            - option "35분"
+            - option "40분"
+            - option "45분"
+            - option "50분"
+            - option "55분"
+    - button "예약 신청하기" [ref=f2e60]

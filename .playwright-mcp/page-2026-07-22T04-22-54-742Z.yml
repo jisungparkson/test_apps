@@ -1,0 +1,8 @@
+- generic [ref=f3e140]:
+  - button "← 홈으로" [ref=f3e141]
+  - heading "내 예약 조회 및 취소" [level=1] [ref=f3e142]
+  - list [ref=f3e143]:
+    - listitem [ref=f3e144]:
+      - paragraph [ref=f3e145]: 미래창작공방
+      - paragraph [ref=f3e146]: 2026-08-03 09:00~10:00
+      - button "예약 취소" [ref=f3e147]

@@ -1,0 +1,9 @@
+- generic [ref=f3e131]:
+  - generic [ref=f3e132]:
+    - generic [ref=f3e133]: 시나리오테스트
+    - button "로그아웃" [ref=f3e134]
+  - heading "특별실 예약 시스템" [level=1] [ref=f3e135]
+  - button "미래창작공방" [ref=f3e136]
+  - button "에듀테크 교육실" [ref=f3e137]
+  - button "전체 예약 현황 보기" [ref=f3e138]
+  - button "내 예약 조회 및 취소" [ref=f3e139]

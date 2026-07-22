@@ -1,0 +1,25 @@
+- generic [ref=f3e158]:
+  - button "← 홈으로" [ref=f3e159]
+  - heading "전체 예약 현황" [level=1] [ref=f3e160]
+  - generic [ref=f3e161]:
+    - generic [ref=f3e162]: 날짜 선택
+    - textbox [ref=f3e163]
+  - list [ref=f3e164]:
+    - listitem [ref=f3e165]:
+      - generic [ref=f3e166]:
+        - generic [ref=f3e167]: 2026-07-21
+        - generic [ref=f3e168]: 에듀테크 교육실
+      - paragraph [ref=f3e169]: 08:00~13:00
+      - paragraph [ref=f3e170]: 손흥민
+    - listitem [ref=f3e171]:
+      - generic [ref=f3e172]:
+        - generic [ref=f3e173]: 2026-07-25
+        - generic [ref=f3e174]: 미래창작공방
+      - paragraph [ref=f3e175]: 10:00~11:00
+      - paragraph [ref=f3e176]: 테스트
+    - listitem [ref=f3e177]:
+      - generic [ref=f3e178]:
+        - generic [ref=f3e179]: 2026-07-25
+        - generic [ref=f3e180]: 에듀테크 교육실
+      - paragraph [ref=f3e181]: 10:00~11:00
+      - paragraph [ref=f3e182]: 박1

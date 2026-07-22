@@ -1,0 +1,66 @@
+- generic [ref=f3e109]:
+  - button "← 홈으로" [ref=f3e110]
+  - heading "예약 신청 - 미래창작공방" [level=1] [ref=f3e111]
+  - generic [ref=f3e112]:
+    - generic [ref=f3e113]:
+      - generic [ref=f3e114]: 신청 교사명
+      - textbox [ref=f3e115]: 시나리오테스트
+    - generic [ref=f3e116]:
+      - generic [ref=f3e117]: 사용 날짜
+      - textbox [ref=f3e118]: 2026-08-03
+    - generic [ref=f3e119]:
+      - generic [ref=f3e120]:
+        - generic [ref=f3e121]: 시작 시간
+        - generic [ref=f3e122]:
+          - combobox [ref=f3e123]:
+            - option "08시"
+            - option "09시" [selected]
+            - option "10시"
+            - option "11시"
+            - option "12시"
+            - option "13시"
+            - option "14시"
+            - option "15시"
+            - option "16시"
+            - option "17시"
+          - combobox [ref=f3e124]:
+            - option "00분" [selected]
+            - option "05분"
+            - option "10분"
+            - option "15분"
+            - option "20분"
+            - option "25분"
+            - option "30분"
+            - option "35분"
+            - option "40분"
+            - option "45분"
+            - option "50분"
+            - option "55분"
+      - generic [ref=f3e125]:
+        - generic [ref=f3e126]: 종료 시간
+        - generic [ref=f3e127]:
+          - combobox [ref=f3e128]:
+            - option "08시"
+            - option "09시"
+            - option "10시" [selected]
+            - option "11시"
+            - option "12시"
+            - option "13시"
+            - option "14시"
+            - option "15시"
+            - option "16시"
+            - option "17시"
+          - combobox [ref=f3e129]:
+            - option "00분" [selected]
+            - option "05분"
+            - option "10분"
+            - option "15분"
+            - option "20분"
+            - option "25분"
+            - option "30분"
+            - option "35분"
+            - option "40분"
+            - option "45분"
+            - option "50분"
+            - option "55분"
+    - button "예약 신청하기" [ref=f3e130]
